@@ -39,12 +39,10 @@ func (d *NullFixed) Scan(value interface{}) error {
 		str, err := unquoteIfQuoted(v)
 		if err != nil {
 			d.Valid = false
-			d.Fixed = fixed.ZERO
 			return err
 		}
 		d.Fixed, err = fixed.NewSErr(str)
 		if err != nil {
-			d.Fixed = fixed.ZERO
 			d.Valid = false
 		}
 		return err
@@ -53,6 +51,9 @@ func (d *NullFixed) Scan(value interface{}) error {
 
 // Value implements the driver.Valuer interface for database serialization.
 func (d NullFixed) Value() (driver.Value, error) {
+	if !d.Valid {
+		return nil, nil
+	}
 	return d.Fixed.String(), nil
 }
 
@@ -60,7 +61,6 @@ func (d NullFixed) Value() (driver.Value, error) {
 func (d *NullFixed) UnmarshalJSON(decimalBytes []byte) error {
 	if string(decimalBytes) == "null" {
 		d.Valid = false
-		d.Fixed = fixed.ZERO
 		return nil
 	}
 	d.Valid = true
